@@ -1,6 +1,6 @@
 {
-  "name": "اردو سافٹ ویئر اسٹوڈیو | Urdu Software Studio",
-  "description": "کمپیوٹر سافٹ ویئر بنانے کا مکمل تعارف، لائیو ورکنگ سسٹمز (POS، کھاتہ، ٹاسک، کیلکولیٹر)، اور کسٹم سافٹ ویئر آرکیٹیکٹ | Interactive Computer Software Builder & Showcase in Urdu",
+  "name": "WAQAS MART — Supermarket Management & POS Web App",
+  "description": "Professional Web Application for Supermarket Point of Sale, Purchase Entry, Total Stock, and Inventory Management",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

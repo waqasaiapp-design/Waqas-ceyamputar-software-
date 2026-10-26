@@ -29,6 +29,11 @@ interface SidebarProps {
   onOpenSalesHistory: () => void;
   onOpenStockModal: () => void;
   onOpenReportsModal: () => void;
+  onOpenCustomers?: () => void;
+  onOpenSuppliers?: () => void;
+  onOpenCctv?: () => void;
+  onOpenDeviceManagement?: () => void;
+  onNavigateToDashboard?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -41,9 +46,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenSalesHistory,
   onOpenStockModal,
   onOpenReportsModal,
+  onOpenCustomers,
+  onOpenSuppliers,
+  onOpenCctv,
+  onOpenDeviceManagement,
+  onNavigateToDashboard,
 }) => {
   const menuItems: { id: ActiveSidebarTab; label: string; icon: React.ReactNode; action?: () => void }[] = [
-    { id: 'Dashboard', label: 'Dashboard', icon: <Home className="w-4 h-4" /> },
+    { id: 'Dashboard', label: 'Dashboard', icon: <Home className="w-4 h-4" />, action: onNavigateToDashboard },
     { id: 'Sale', label: 'Sales / POS', icon: <ShoppingCart className="w-4 h-4" /> },
     { id: 'Purchase', label: 'Purchase Entry', icon: <FileSpreadsheet className="w-4 h-4" /> },
     { id: 'Purchase Orders', label: 'Purchase Orders', icon: <FileSpreadsheet className="w-4 h-4" /> },
@@ -51,13 +61,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'Sales History', label: 'Sales History', icon: <ClipboardList className="w-4 h-4" />, action: onOpenSalesHistory },
     { id: 'Sales Return', label: 'Sales Return', icon: <RotateCcw className="w-4 h-4" /> },
     { id: 'Total Stock', label: 'Total Stock', icon: <Box className="w-4 h-4" />, action: onOpenStockModal },
-    { id: 'Customers', label: 'Customers', icon: <Users className="w-4 h-4" /> },
-    { id: 'Suppliers', label: 'Suppliers', icon: <UserCheck className="w-4 h-4" /> },
+    { id: 'Customers', label: 'Customers', icon: <Users className="w-4 h-4" />, action: onOpenCustomers },
+    { id: 'Suppliers', label: 'Suppliers', icon: <UserCheck className="w-4 h-4" />, action: onOpenSuppliers },
     { id: 'Daily Hisab', label: 'Daily Hisab', icon: <Calendar className="w-4 h-4" />, action: onOpenDailyHisab },
     { id: 'Reports', label: 'Reports', icon: <BarChart3 className="w-4 h-4" />, action: onOpenReportsModal },
-    { id: 'CCTV Cameras', label: 'CCTV Cameras', icon: <Video className="w-4 h-4" /> },
-    { id: 'Google Search', label: 'Google Search', icon: <Search className="w-4 h-4" /> },
-    { id: 'Device Management', label: 'Device Management', icon: <Smartphone className="w-4 h-4" /> },
+    { id: 'CCTV Cameras', label: 'CCTV Cameras', icon: <Video className="w-4 h-4" />, action: onOpenCctv },
+    { 
+      id: 'Google Search', 
+      label: 'Google Search', 
+      icon: <Search className="w-4 h-4" />, 
+      action: () => window.open('https://www.google.com', '_blank') 
+    },
+    { id: 'Device Management', label: 'Device Management', icon: <Smartphone className="w-4 h-4" />, action: onOpenDeviceManagement },
   ];
 
   return (
@@ -74,7 +89,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 setActiveTab(item.id);
                 if (item.action) item.action();
               }}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-semibold transition-all ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-semibold transition-all cursor-pointer ${
                 isActive
                   ? 'bg-[#00b852] text-white shadow-sm font-bold'
                   : 'text-slate-300 hover:text-white hover:bg-white/5'
@@ -95,13 +110,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Bottom Promotional Picture & Footer Status */}
       <div className="p-2.5 space-y-1.5 mt-auto bg-[#061224]">
         
-        {/* Replaceable Sidebar Picture (Requirement 3) */}
+        {/* Replaceable Sidebar Picture */}
         <div 
           onClick={() => onOpenSettings('sidebar')}
           className="relative rounded-2xl overflow-hidden cursor-pointer group border border-emerald-600/40 bg-[#082e1c] h-[135px] flex flex-col justify-between p-2.5 text-center shadow-md hover:ring-2 hover:ring-[#00b852] transition-all"
           title="Click to Change Sidebar Picture in Settings"
         >
-          {/* Background image: Default cropped artwork or custom image */}
+          {/* Background image */}
           <div 
             className="absolute inset-0 bg-cover bg-center transition-transform group-hover:scale-102"
             style={{ 
@@ -130,7 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {branding.sidebarFooterName || branding.softwareName || 'WAQAS MART'}
           </span>
           <span className="text-slate-600">|</span>
-          <span className="text-slate-400 shrink-0">POS System</span>
+          <span className="text-slate-400 shrink-0">Web App</span>
         </div>
 
       </div>

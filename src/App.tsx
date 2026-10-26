@@ -10,6 +10,13 @@ import { ProductCatalog } from './components/ProductCatalog';
 import { CurrentSaleCart } from './components/CurrentSaleCart';
 import { StatusBar } from './components/StatusBar';
 
+// Main Application Pages
+import { PurchaseEntry } from './components/PurchaseEntry';
+import { NewItemPage } from './components/NewItemPage';
+import { TotalStockPage } from './components/TotalStockPage';
+import { DashboardPage } from './components/DashboardPage';
+import { SalesSummaryPage } from './components/SalesSummaryPage';
+
 // Modals
 import { SettingsModal } from './components/modals/SettingsModal';
 import { HeldBillsModal } from './components/modals/HeldBillsModal';
@@ -19,9 +26,12 @@ import { ReceiptModal } from './components/modals/ReceiptModal';
 import { SalesHistoryModal } from './components/modals/SalesHistoryModal';
 import { NewItemModal } from './components/modals/NewItemModal';
 import { DailyHisabModal } from './components/modals/DailyHisabModal';
-import { PurchaseEntry } from './components/PurchaseEntry';
-import { NewItemPage } from './components/NewItemPage';
-import { TotalStockPage } from './components/TotalStockPage';
+import { BackupModal } from './components/modals/BackupModal';
+import { CustomersModal } from './components/modals/CustomersModal';
+import { SuppliersModal } from './components/modals/SuppliersModal';
+import { CctvModal } from './components/modals/CctvModal';
+import { DeviceManagementModal } from './components/modals/DeviceManagementModal';
+import { PwaInstallModal } from './components/modals/PwaInstallModal';
 
 import { 
   Product, 
@@ -37,17 +47,16 @@ import {
 } from './types/pos';
 
 import { 
-  INITIAL_PRODUCTS, 
   SAMPLE_DEMO_PRODUCTS,
-  INITIAL_CART, 
   DEFAULT_BRANDING, 
   DEFAULT_SIDEBAR_BANNER, 
-  DEFAULT_SALE_BANNER, 
-  INITIAL_HELD_BILLS 
+  DEFAULT_SALE_BANNER 
 } from './data/posData';
 
+export type CurrentViewMode = 'pos' | 'dashboard' | 'purchase' | 'new-item' | 'total-stock' | 'sales-summary';
+
 export default function App() {
-  // Screen width detection for responsive mobile auto-fit
+  // Screen width detection for responsive auto-fit
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1440
   );
@@ -59,15 +68,9 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Check if blank slate (0 items, 0 hisab) was initialized
-  const isBlankSlateApplied = typeof window !== 'undefined' && localStorage.getItem('waqas_blank_slate_v5') === 'true';
-
-  // 1. Data States (with localStorage persistence)
+  // 1. Data States (Safely persistent across reloads - NEVER automatically wiped)
   const [products, setProducts] = useState<Product[]>(() => {
-    if (!isBlankSlateApplied) {
-      localStorage.setItem('waqas_pos_products_v2', JSON.stringify([]));
-      return [];
-    }
+    if (typeof window === 'undefined') return [];
     const saved = localStorage.getItem('waqas_pos_products_v2');
     if (saved) {
       try {
@@ -80,71 +83,61 @@ export default function App() {
   });
 
   const [cart, setCart] = useState<CartItem[]>(() => {
-    if (!isBlankSlateApplied) {
-      localStorage.removeItem('waqas_pos_cart_v2');
-      return [];
-    }
+    if (typeof window === 'undefined') return [];
     const saved = localStorage.getItem('waqas_pos_cart_v2');
-    return saved ? JSON.parse(saved) : [];
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
   });
 
   const [heldBills, setHeldBills] = useState<HeldBill[]>(() => {
-    if (!isBlankSlateApplied) {
-      localStorage.removeItem('waqas_pos_held_bills_v2');
-      return [];
-    }
+    if (typeof window === 'undefined') return [];
     const saved = localStorage.getItem('waqas_pos_held_bills_v2');
-    return saved ? JSON.parse(saved) : [];
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
   });
 
   const [salesHistory, setSalesHistory] = useState<CompletedSale[]>(() => {
-    if (!isBlankSlateApplied) {
-      localStorage.removeItem('waqas_pos_sales_history_v2');
-      return [];
-    }
+    if (typeof window === 'undefined') return [];
     const saved = localStorage.getItem('waqas_pos_sales_history_v2');
-    return saved ? JSON.parse(saved) : [];
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
   });
 
   const [branding, setBranding] = useState<BrandingSettings>(() => {
-    const saved = localStorage.getItem('waqas_pos_branding_v2');
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('waqas_pos_branding_v2') : null;
     return saved ? JSON.parse(saved) : DEFAULT_BRANDING;
   });
 
   const [sidebarBanner, setSidebarBanner] = useState<SidebarBannerSettings>(() => {
-    const saved = localStorage.getItem('waqas_pos_sidebar_banner_v2');
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('waqas_pos_sidebar_banner_v2') : null;
     return saved ? JSON.parse(saved) : DEFAULT_SIDEBAR_BANNER;
   });
 
   const [saleBanner, setSaleBanner] = useState<SaleBannerSettings>(() => {
-    const saved = localStorage.getItem('waqas_pos_sale_banner_v2');
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('waqas_pos_sale_banner_v2') : null;
     return saved ? JSON.parse(saved) : DEFAULT_SALE_BANNER;
   });
 
-  // Ensure initial zeroing and item removal runs on startup
-  useEffect(() => {
-    if (!isBlankSlateApplied) {
-      localStorage.setItem('waqas_blank_slate_v5', 'true');
-      localStorage.setItem('waqas_pos_products_v2', JSON.stringify([]));
-      localStorage.removeItem('waqas_pos_cart_v2');
-      localStorage.removeItem('waqas_pos_sales_history_v2');
-      localStorage.removeItem('waqas_pos_held_bills_v2');
-      localStorage.removeItem('waqas_purchases_v2');
-      localStorage.removeItem('waqas_current_purchase_items_v2');
-      localStorage.removeItem('waqas_stock_adjustments_v2');
-      const savedSuppliers = localStorage.getItem('waqas_suppliers_v2');
-      if (savedSuppliers) {
-        try {
-          const sups = JSON.parse(savedSuppliers);
-          const zeroedSups = sups.map((s: any) => ({ ...s, balance: 0 }));
-          localStorage.setItem('waqas_suppliers_v2', JSON.stringify(zeroedSups));
-        } catch (e) {}
-      }
-    }
-  }, []);
-
   // 2. Active View & Mode States
-  const [currentView, setCurrentView] = useState<'pos' | 'purchase' | 'new-item' | 'total-stock'>('pos');
+  const [currentView, setCurrentView] = useState<CurrentViewMode>('pos');
   const [activeSidebarTab, setActiveSidebarTab] = useState<ActiveSidebarTab>('Sale');
   const [posMode, setPosMode] = useState<PosMode>('Sale');
   const [selectedCategory, setSelectedCategory] = useState<string>('All Items');
@@ -152,6 +145,33 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [lastCompletedSale, setLastCompletedSale] = useState<CompletedSale | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // 3. PWA Installation Event & Prompt
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<any>(null);
+  const [isPwaInstallModalOpen, setIsPwaInstallModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleTriggerInstall = () => {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.then((choiceResult: any) => {
+        if (choiceResult.outcome === 'accepted') {
+          showToast('WAQAS MART installed successfully on desktop!');
+        }
+        setDeferredInstallPrompt(null);
+      });
+    } else {
+      setIsPwaInstallModalOpen(true);
+    }
+  };
 
   // Update stock when a purchase invoice is saved
   const handleUpdateStockFromPurchase = (
@@ -200,7 +220,7 @@ export default function App() {
     });
   };
 
-  // 3. Modals Visibility States
+  // 4. Modals Visibility States
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<'branding' | 'sidebar' | 'banner' | 'desktop'>('branding');
   const [isHeldBillsOpen, setIsHeldBillsOpen] = useState(false);
@@ -210,8 +230,13 @@ export default function App() {
   const [isSalesHistoryOpen, setIsSalesHistoryOpen] = useState(false);
   const [isNewItemOpen, setIsNewItemOpen] = useState(false);
   const [isDailyHisabOpen, setIsDailyHisabOpen] = useState(false);
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [isCustomersModalOpen, setIsCustomersModalOpen] = useState(false);
+  const [isSuppliersModalOpen, setIsSuppliersModalOpen] = useState(false);
+  const [isCctvModalOpen, setIsCctvModalOpen] = useState(false);
+  const [isDeviceManagementModalOpen, setIsDeviceManagementModalOpen] = useState(false);
 
-  // Save changes to localStorage
+  // Synchronize state changes to localStorage
   useEffect(() => {
     localStorage.setItem('waqas_pos_products_v2', JSON.stringify(products));
   }, [products]);
@@ -230,7 +255,44 @@ export default function App() {
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // Restore Database from JSON file
+  const handleRestoreBackupData = (importedData: any) => {
+    if (importedData.products && Array.isArray(importedData.products)) {
+      setProducts(importedData.products);
+      localStorage.setItem('waqas_pos_products_v2', JSON.stringify(importedData.products));
+    }
+    if (importedData.salesHistory && Array.isArray(importedData.salesHistory)) {
+      setSalesHistory(importedData.salesHistory);
+      localStorage.setItem('waqas_pos_sales_history_v2', JSON.stringify(importedData.salesHistory));
+    }
+    if (importedData.heldBills && Array.isArray(importedData.heldBills)) {
+      setHeldBills(importedData.heldBills);
+      localStorage.setItem('waqas_pos_held_bills_v2', JSON.stringify(importedData.heldBills));
+    }
+    if (importedData.branding) {
+      setBranding(importedData.branding);
+      localStorage.setItem('waqas_pos_branding_v2', JSON.stringify(importedData.branding));
+    }
+    if (importedData.sidebarBanner) {
+      setSidebarBanner(importedData.sidebarBanner);
+      localStorage.setItem('waqas_pos_sidebar_banner_v2', JSON.stringify(importedData.sidebarBanner));
+    }
+    if (importedData.saleBanner) {
+      setSaleBanner(importedData.saleBanner);
+      localStorage.setItem('waqas_pos_sale_banner_v2', JSON.stringify(importedData.saleBanner));
+    }
+    if (importedData.purchases) {
+      localStorage.setItem('waqas_purchases_v2', JSON.stringify(importedData.purchases));
+    }
+    if (importedData.suppliers) {
+      localStorage.setItem('waqas_suppliers_v2', JSON.stringify(importedData.suppliers));
+    }
+    if (importedData.adjustments) {
+      localStorage.setItem('waqas_stock_adjustments_v2', JSON.stringify(importedData.adjustments));
+    }
   };
 
   // Cart Operations
@@ -244,7 +306,7 @@ export default function App() {
       }
       return [...prev, { product, quantity: 1 }];
     });
-    showToast(`Added ${product.name} to cart`);
+    showToast(`Added "${product.name}" to sale cart`);
   };
 
   const handleUpdateQuantity = (productId: string, delta: number) => {
@@ -273,7 +335,7 @@ export default function App() {
     }
   };
 
-  // HOLD BILL / PARK SALE (Requirement 5)
+  // HOLD BILL / PARK SALE
   const handleHoldBill = () => {
     if (cart.length === 0) return;
 
@@ -427,12 +489,10 @@ export default function App() {
     setSidebarBanner(DEFAULT_SIDEBAR_BANNER);
     setSaleBanner(DEFAULT_SALE_BANNER);
     localStorage.clear();
-    localStorage.setItem('waqas_blank_slate_v5', 'true');
-    localStorage.setItem('waqas_pos_products_v2', JSON.stringify([]));
     showToast('سافٹ ویئر مکمل ری سیٹ ہو گیا (0 Items, 0 Hisab)');
   };
 
-  // Keyboard shortcut listener for desktop feel
+  // Keyboard shortcut listener for desktop POS speed
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'F2') {
@@ -481,7 +541,9 @@ export default function App() {
           activeTab={activeSidebarTab}
           setActiveTab={(tab) => {
             setActiveSidebarTab(tab);
-            if (tab === 'Purchase') {
+            if (tab === 'Dashboard') {
+              setCurrentView('dashboard');
+            } else if (tab === 'Purchase') {
               setCurrentView('purchase');
               setPosMode('Purchase');
             } else if (tab === 'Sale') {
@@ -491,18 +553,28 @@ export default function App() {
               setCurrentView('new-item');
             } else if (tab === 'Total Stock') {
               setCurrentView('total-stock');
+            } else if (tab === 'Sales History' || tab === 'Reports') {
+              setCurrentView('sales-summary');
             }
           }}
           branding={branding}
           sidebarBanner={sidebarBanner}
           onOpenSettings={handleOpenSettingsTab}
           onOpenDailyHisab={() => setIsDailyHisabOpen(true)}
-          onOpenSalesHistory={() => setIsSalesHistoryOpen(true)}
+          onOpenSalesHistory={() => setCurrentView('sales-summary')}
           onOpenStockModal={() => {
             setCurrentView('total-stock');
             setActiveSidebarTab('Total Stock');
           }}
-          onOpenReportsModal={() => setIsDailyHisabOpen(true)}
+          onOpenReportsModal={() => setCurrentView('sales-summary')}
+          onOpenCustomers={() => setIsCustomersModalOpen(true)}
+          onOpenSuppliers={() => setIsSuppliersModalOpen(true)}
+          onOpenCctv={() => setIsCctvModalOpen(true)}
+          onOpenDeviceManagement={() => setIsDeviceManagementModalOpen(true)}
+          onNavigateToDashboard={() => {
+            setCurrentView('dashboard');
+            setActiveSidebarTab('Dashboard');
+          }}
         />
 
         {/* Center: Mode Tabs, Categories, Product Cards & Bottom Banner */}
@@ -530,7 +602,7 @@ export default function App() {
           }}
           onOpenScanner={() => setIsScannerOpen(true)}
           onOpenDailyHisab={() => setIsDailyHisabOpen(true)}
-          onOpenReports={() => setIsDailyHisabOpen(true)}
+          onOpenReports={() => setCurrentView('sales-summary')}
         />
 
         {/* Right: Current Sale Cart with Hold Bill & Checkout */}
@@ -563,7 +635,7 @@ export default function App() {
               showToast('Add items and checkout to print thermal receipt');
             }
           }}
-          onOpenSalesHistory={() => setIsSalesHistoryOpen(true)}
+          onOpenSalesHistory={() => setCurrentView('sales-summary')}
         />
       </div>
 
@@ -575,40 +647,57 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#071120] flex flex-col items-center justify-start overflow-x-auto relative">
       
-      {/* Top Floating Control Bar for Screen Fit / Zoom, Page Switching and Settings */}
+      {/* Top Floating Control Bar for Web App Navigation, Modules, Backup, PWA Install & Zoom */}
       <aside aria-label="POS Display & View Controls" className="sticky top-0 z-40 w-full bg-[#0a182c]/95 backdrop-blur-md border-b border-slate-700/80 px-4 py-2 flex flex-wrap items-center justify-between gap-2 shadow-lg select-none">
+        
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#00b852] animate-pulse"></span>
-            <span className="font-bold text-white text-xs tracking-wide uppercase">
+            <span className="font-extrabold text-white text-xs tracking-wide uppercase">
               {branding.softwareName || 'WAQAS MART'}
             </span>
           </div>
 
-          {/* Module Switcher Tabs: Sale POS <-> Purchase Entry <-> New Item */}
-          <div className="flex items-center bg-slate-800/90 rounded-lg p-0.5 border border-slate-700">
+          {/* Module Switcher Tabs: Sale POS <-> Dashboard <-> Purchase <-> New Item <-> Total Stock <-> Sales Summary */}
+          <div className="flex items-center bg-slate-800/90 rounded-lg p-0.5 border border-slate-700 overflow-x-auto max-w-[70vw]">
             <button
               onClick={() => {
                 setCurrentView('pos');
                 setActiveSidebarTab('Sale');
                 setPosMode('Sale');
               }}
-              className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                 currentView === 'pos'
                   ? 'bg-[#00b852] text-white shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-700'
               }`}
             >
               <span>🛒</span>
-              <span>Sale POS (1536×1024)</span>
+              <span>Sale POS</span>
             </button>
+
+            <button
+              onClick={() => {
+                setCurrentView('dashboard');
+                setActiveSidebarTab('Dashboard');
+              }}
+              className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                currentView === 'dashboard'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-700'
+              }`}
+            >
+              <span>📊</span>
+              <span>Dashboard</span>
+            </button>
+
             <button
               onClick={() => {
                 setCurrentView('purchase');
                 setActiveSidebarTab('Purchase');
                 setPosMode('Purchase');
               }}
-              className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                 currentView === 'purchase'
                   ? 'bg-[#0284c7] text-white shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-700'
@@ -617,12 +706,13 @@ export default function App() {
               <span>🚚</span>
               <span>Purchase Entry</span>
             </button>
+
             <button
               onClick={() => {
                 setCurrentView('new-item');
                 setActiveSidebarTab('Stock Management');
               }}
-              className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                 currentView === 'new-item'
                   ? 'bg-[#00a852] text-white shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-700'
@@ -631,32 +721,77 @@ export default function App() {
               <span>📦</span>
               <span>New Item</span>
             </button>
+
             <button
               onClick={() => {
                 setCurrentView('total-stock');
                 setActiveSidebarTab('Total Stock');
               }}
-              className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                 currentView === 'total-stock'
                   ? 'bg-[#00a852] text-white shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-700'
               }`}
             >
-              <span>📊</span>
+              <span>📈</span>
               <span>Total Stock</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setCurrentView('sales-summary');
+                setActiveSidebarTab('Sales History');
+              }}
+              className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                currentView === 'sales-summary'
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-700'
+              }`}
+            >
+              <span>📑</span>
+              <span>Sale Summary</span>
+            </button>
+
+            <button
+              onClick={() => setIsDailyHisabOpen(true)}
+              className="px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 text-amber-300 hover:text-white hover:bg-slate-700 shrink-0"
+              title="Daily Cash Register & Drawer Balance"
+            >
+              <span>💵</span>
+              <span>Daily Hisab</span>
+            </button>
+
+            <button
+              onClick={() => setIsBackupModalOpen(true)}
+              className="px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 text-sky-300 hover:text-white hover:bg-slate-700 shrink-0"
+              title="Export or Restore JSON Database Backup"
+            >
+              <span>💾</span>
+              <span>Backup & Sync</span>
             </button>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 text-xs">
+          {/* PWA Install Button */}
+          <button
+            onClick={handleTriggerInstall}
+            className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-sm flex items-center gap-1 cursor-pointer transition-colors"
+            title="Install WAQAS MART on your Windows Desktop / Taskbar"
+          >
+            <span>📲</span>
+            <span>Install Web App</span>
+          </button>
+
+          {/* Screen Fit & Zoom Controls */}
           <button
             onClick={() => { setZoomMode('fit'); setZoomLevel(null); }}
-            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
               zoomMode === 'fit' && zoomLevel === null
                 ? 'bg-[#00b852] text-white shadow-md'
                 : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
-            title="Screen ke hisaab se pora software aik sath dikhaye"
+            title="Auto fit screen size"
           >
             <span>🖥️</span>
             <span>Fit Screen</span>
@@ -664,12 +799,12 @@ export default function App() {
 
           <button
             onClick={() => { setZoomMode('100%'); setZoomLevel(1); }}
-            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
               effectiveScale === 1 && zoomLevel === 1
                 ? 'bg-[#00b852] text-white shadow-md'
                 : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
-            title="100% Asli Windows Size (Scroll karke baray buttons dekh sakte hain)"
+            title="100% Native Desktop Size"
           >
             <span>🔍</span>
             <span>100% View</span>
@@ -698,7 +833,7 @@ export default function App() {
           <button
             onClick={() => handleOpenSettingsTab('branding')}
             className="px-2.5 py-1 rounded-lg bg-emerald-800/60 hover:bg-emerald-700 text-emerald-200 border border-emerald-600/50 flex items-center gap-1 font-semibold text-xs cursor-pointer transition-colors"
-            title="Software Naam aur Tasweerein Tabdeel Karein"
+            title="Settings & Branding"
           >
             <span>⚙️</span>
             <span>Settings</span>
@@ -727,7 +862,79 @@ export default function App() {
               transformOrigin: '0 0',
             }}
           >
-            {currentView === 'purchase' ? (
+            {currentView === 'dashboard' ? (
+              <DashboardPage
+                products={products}
+                salesHistory={salesHistory}
+                branding={branding}
+                sidebarBanner={sidebarBanner}
+                onNavigateToPOS={() => {
+                  setCurrentView('pos');
+                  setActiveSidebarTab('Sale');
+                  setPosMode('Sale');
+                }}
+                onNavigateToPurchase={() => {
+                  setCurrentView('purchase');
+                  setActiveSidebarTab('Purchase');
+                  setPosMode('Purchase');
+                }}
+                onNavigateToNewItem={() => {
+                  setCurrentView('new-item');
+                  setActiveSidebarTab('Stock Management');
+                }}
+                onNavigateToTotalStock={() => {
+                  setCurrentView('total-stock');
+                  setActiveSidebarTab('Total Stock');
+                }}
+                onNavigateToSalesSummary={() => {
+                  setCurrentView('sales-summary');
+                  setActiveSidebarTab('Sales History');
+                }}
+                onOpenDailyHisab={() => setIsDailyHisabOpen(true)}
+                onOpenSettings={handleOpenSettingsTab}
+                onViewReceipt={(sale) => {
+                  setLastCompletedSale(sale);
+                  setIsReceiptOpen(true);
+                }}
+                onExportBackup={() => setIsBackupModalOpen(true)}
+                showToast={showToast}
+              />
+            ) : currentView === 'sales-summary' ? (
+              <SalesSummaryPage
+                salesHistory={salesHistory}
+                branding={branding}
+                sidebarBanner={sidebarBanner}
+                onNavigateToPOS={() => {
+                  setCurrentView('pos');
+                  setActiveSidebarTab('Sale');
+                  setPosMode('Sale');
+                }}
+                onNavigateToDashboard={() => {
+                  setCurrentView('dashboard');
+                  setActiveSidebarTab('Dashboard');
+                }}
+                onNavigateToPurchase={() => {
+                  setCurrentView('purchase');
+                  setActiveSidebarTab('Purchase');
+                  setPosMode('Purchase');
+                }}
+                onNavigateToNewItem={() => {
+                  setCurrentView('new-item');
+                  setActiveSidebarTab('Stock Management');
+                }}
+                onNavigateToTotalStock={() => {
+                  setCurrentView('total-stock');
+                  setActiveSidebarTab('Total Stock');
+                }}
+                onOpenDailyHisab={() => setIsDailyHisabOpen(true)}
+                onOpenSettings={handleOpenSettingsTab}
+                onViewReceipt={(sale) => {
+                  setLastCompletedSale(sale);
+                  setIsReceiptOpen(true);
+                }}
+                showToast={showToast}
+              />
+            ) : currentView === 'purchase' ? (
               <PurchaseEntry
                 products={products}
                 onUpdateStock={handleUpdateStockFromPurchase}
@@ -766,7 +973,10 @@ export default function App() {
                 }}
                 onOpenSettings={handleOpenSettingsTab}
                 onOpenDailyHisab={() => setIsDailyHisabOpen(true)}
-                onOpenSalesHistory={() => setIsSalesHistoryOpen(true)}
+                onOpenSalesHistory={() => {
+                  setCurrentView('sales-summary');
+                  setActiveSidebarTab('Sales History');
+                }}
                 onOpenScanner={() => setIsScannerOpen(true)}
                 showToast={showToast}
               />
@@ -792,7 +1002,10 @@ export default function App() {
                 sidebarBanner={sidebarBanner}
                 onOpenSettings={handleOpenSettingsTab}
                 onOpenDailyHisab={() => setIsDailyHisabOpen(true)}
-                onOpenSalesHistory={() => setIsSalesHistoryOpen(true)}
+                onOpenSalesHistory={() => {
+                  setCurrentView('sales-summary');
+                  setActiveSidebarTab('Sales History');
+                }}
                 onOpenScanner={() => setIsScannerOpen(true)}
                 showToast={showToast}
                 onResetStockToZero={handleResetStockToZero}
@@ -805,7 +1018,6 @@ export default function App() {
         </div>
       </main>
 
-
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-12 right-6 z-50 px-4 py-2.5 rounded-2xl bg-slate-900 text-white font-semibold text-xs shadow-xl border border-slate-700 animate-in fade-in slide-in-from-bottom-2 flex items-center gap-2">
@@ -814,9 +1026,9 @@ export default function App() {
         </div>
       )}
 
-      {/* 4. MODALS */}
+      {/* MODALS */}
 
-      {/* Settings Modal (Branding, Sidebar Picture, Sale Banner, Desktop EXE) */}
+      {/* Settings Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
@@ -834,7 +1046,7 @@ export default function App() {
         onLoadDemoProducts={handleLoadDemoProducts}
       />
 
-      {/* Held Bills Modal (Requirement 5) */}
+      {/* Held Bills Modal */}
       <HeldBillsModal
         isOpen={isHeldBillsOpen}
         onClose={() => setIsHeldBillsOpen(false)}
@@ -843,7 +1055,7 @@ export default function App() {
         onCancelBill={handleCancelHeldBill}
       />
 
-      {/* Barcode Scanner Modal (Requirement 6) */}
+      {/* Barcode Scanner Modal */}
       <BarcodeScannerModal
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
@@ -897,6 +1109,56 @@ export default function App() {
         onClose={() => setIsDailyHisabOpen(false)}
         sales={salesHistory}
         onResetHisab={handleResetHisabToZero}
+      />
+
+      {/* Backup & Cross-Computer Sync Modal */}
+      <BackupModal
+        isOpen={isBackupModalOpen}
+        onClose={() => setIsBackupModalOpen(false)}
+        products={products}
+        salesHistory={salesHistory}
+        heldBills={heldBills}
+        branding={branding}
+        sidebarBanner={sidebarBanner}
+        saleBanner={saleBanner}
+        onRestoreData={handleRestoreBackupData}
+        showToast={showToast}
+      />
+
+      {/* Customers Ledger Modal */}
+      <CustomersModal
+        isOpen={isCustomersModalOpen}
+        onClose={() => setIsCustomersModalOpen(false)}
+        showToast={showToast}
+      />
+
+      {/* Suppliers Directory Modal */}
+      <SuppliersModal
+        isOpen={isSuppliersModalOpen}
+        onClose={() => setIsSuppliersModalOpen(false)}
+        showToast={showToast}
+      />
+
+      {/* CCTV Security Camera Modal */}
+      <CctvModal
+        isOpen={isCctvModalOpen}
+        onClose={() => setIsCctvModalOpen(false)}
+      />
+
+      {/* Device Management Modal */}
+      <DeviceManagementModal
+        isOpen={isDeviceManagementModalOpen}
+        onClose={() => setIsDeviceManagementModalOpen(false)}
+        branding={branding}
+        showToast={showToast}
+      />
+
+      {/* PWA Install Instructions Modal */}
+      <PwaInstallModal
+        isOpen={isPwaInstallModalOpen}
+        onClose={() => setIsPwaInstallModalOpen(false)}
+        onTriggerInstallPrompt={handleTriggerInstall}
+        canInstallDirectly={!!deferredInstallPrompt}
       />
 
     </div>
