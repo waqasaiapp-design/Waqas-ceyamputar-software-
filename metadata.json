@@ -1,0 +1,6 @@
+{
+  "name": "اردو سافٹ ویئر اسٹوڈیو | Urdu Software Studio",
+  "description": "کمپیوٹر سافٹ ویئر بنانے کا مکمل تعارف، لائیو ورکنگ سسٹمز (POS، کھاتہ، ٹاسک، کیلکولیٹر)، اور کسٹم سافٹ ویئر آرکیٹیکٹ | Interactive Computer Software Builder & Showcase in Urdu",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
